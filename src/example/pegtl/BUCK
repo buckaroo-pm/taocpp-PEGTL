@@ -1,0 +1,9 @@
+cxx_binary(
+  name = 'csv1',
+  srcs = [
+    'csv1.cpp',
+  ],
+  deps = [
+    '//:pegtl',
+  ],
+)

@@ -1,174 +1,33 @@
-language: generic
-os: linux
-dist: xenial
+language: cpp
+sudo: true
+dist: trusty
 
-matrix:
-  include:
-    - compiler: gcc
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['g++-7']
-      env:
-        - CXX=g++-7
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-6
+      - gcc-6
 
-    - compiler: gcc
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['g++-8']
-      env:
-        - CXX=g++-8
+os:
+  - linux
+  - osx
 
-    - compiler: clang
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-xenial-5']
-          packages: ['clang-5.0', 'g++-7']
-      env:
-        - CXX=clang++-5.0
+env:
+  - BUCKAROO_VERSION=v2.0.0
 
-    - compiler: clang
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-xenial-6']
-          packages: ['clang-6.0', 'g++-7']
-      env:
-        - CXX=clang++-6.0
+cache:
+  directories:
+    - $HOME/.buckaroo/cache
+    - $TRAVIS_BUILD_DIR/bin
 
-    - compiler: clang
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-xenial-7']
-          packages: ['clang-7', 'g++-7']
-      env:
-        - CXX=clang++-7
+osx_image: xcode9.3
 
-    - compiler: clang
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-xenial-7']
-          packages: ['clang-7', 'g++-7']
-      env:
-        - CXX=clang++-7
-        - CPPFLAGS=-fms-extensions
-
-    - os: osx
-      osx_image: xcode9.4
-      compiler: clang
-      env:
-        - CXX=clang++
-
-    - os: osx
-      osx_image: xcode10
-      compiler: clang
-      env:
-        - CXX=clang++
-
-    - compiler: gcc
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['g++-7']
-      env:
-        - CXX=g++-7
-        - CXXFLAGS="-O0 --coverage"
-      before_script:
-        - pip install --user cpp-coveralls
-      script:
-        - make -kj3 check
-        - coveralls --gcov gcov-7 --gcov-options '\-lp' --exclude src
-
-    - compiler: gcc
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['g++-8']
-      env:
-        - CXX=g++-8
-        - CPPFLAGS="-fsanitize=undefined -fuse-ld=gold"
-
-    - compiler: gcc
-      sudo: true
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['g++-8']
-      env:
-        - CXX=g++-8
-        - CPPFLAGS="-fsanitize=address -fuse-ld=gold"
-
-    - compiler: clang
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-xenial-7']
-          packages: ['clang-7', 'g++-8']
-      env:
-        - CXX=clang++-7
-        - CPPFLAGS=-fsanitize=undefined
-
-    - compiler: clang
-      sudo: true
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-xenial-7']
-          packages: ['clang-7', 'g++-8']
-      env:
-        - CXX=clang++-7
-        - CPPFLAGS=-fsanitize=address
-
-    - compiler: gcc
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['g++-8', 'valgrind']
-      env:
-        - CXX=g++-8
-        - SPECIAL=valgrind
-      script:
-        - make -kj3 valgrind
-
-###
-#
-# CppCheck 1.84 does not support C++17
-#
-#    - compiler: gcc
-#      addons:
-#        apt:
-#          sources: ['ubuntu-toolchain-r-test']
-#          packages: ['g++-8', 'cppcheck']
-#      env:
-#        - CXX=g++-8
-#        - SPECIAL=cppcheck
-#      script:
-#        - make -kj3 cppcheck
-
-    - compiler: clang
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-xenial-7']
-          packages: ['clang-7', 'clang-tidy-7', 'g++-7']
-      env:
-        - CXX=clang++-7
-        - CLANG_TIDY=clang-tidy-7
-      script:
-        - "sed -i 's#TAO_PEGTL_NAMESPACE#pegtl#g' $(find . -name '*.[hc]pp')"
-        - make -kj3 clang-tidy
-
-    - language: python
-      python:
-        - "3.6"
-      sudo: required
-      install:
-        - pip install conan conan-package-tools
-      env:
-        - CONAN_GCC_VERSIONS=7
-        - CONAN_DOCKER_IMAGE=lasote/conangcc7
-      script:
-        - python .conan/build.py
+before_install:
+  - ./travis/before-install-$TRAVIS_OS_NAME.sh
 
 script:
-  - $CXX --version
-  - make -j3 build/src/test/pegtl/tester
-  - build/src/test/pegtl/tester
-  - make -kj3
+  - ./bin/buckaroo install
+  - ./bin/buck build -c ui.superconsole=DISABLED //:pegtl
+  - ./bin/buck build -c ui.superconsole=DISABLED //src/example/pegtl/:csv1
