@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-#include <tao/pegtl.hpp>
+#include <pegtl.hpp>
 
 namespace pegtl = tao::TAO_PEGTL_NAMESPACE;
 

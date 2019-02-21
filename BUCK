@@ -5,7 +5,7 @@ prebuilt_cxx_library(
   header_only = True,
   header_namespace = '',
   exported_headers = subdir_glob([
-    ('include', '**/*.hpp'),
+    ('include/tao', '**/*.hpp'),
   ]),
   licenses = [
     'LICENSE',
